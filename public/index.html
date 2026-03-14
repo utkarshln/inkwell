@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inkwell — Your Online Notebook</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
@@ -12,9 +13,36 @@ header{background:#128C7E;padding:13px 20px;display:flex;align-items:center;just
 .logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
 .logo-name{font-size:18px;font-weight:600;letter-spacing:-.2px}
 .logo-sub{font-size:10.5px;opacity:.7;margin-top:1px}
-.new-note-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
-.new-note-btn:hover{background:rgba(255,255,255,.3)}
-main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
+.header-right{display:flex;align-items:center;gap:8px}
+.hdr-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .15s}
+.hdr-btn:hover{background:rgba(255,255,255,.3)}
+.hdr-btn .badge{background:#fff;color:#128C7E;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;max-width:1100px;width:100%;margin:0 auto;padding:20px 14px 60px;gap:16px;align-items:flex-start}
+.main-col{flex:1;min-width:0}
+
+/* ── History sidebar ── */
+.sidebar{width:260px;flex-shrink:0;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden;position:sticky;top:72px;display:none}
+.sidebar.open{display:block}
+.sb-header{padding:14px 16px 10px;border-bottom:1px solid #e9edef;display:flex;align-items:center;justify-content:space-between}
+.sb-title{font-size:13px;font-weight:600;color:#111}
+.sb-clear{background:transparent;border:none;font-size:11px;color:#aaa;cursor:pointer;font-family:inherit}
+.sb-clear:hover{color:#C0392B}
+.sb-empty{padding:24px 16px;text-align:center;color:#aaa;font-size:13px;line-height:1.6}
+.sb-list{max-height:calc(100vh - 180px);overflow-y:auto}
+.sb-item{padding:12px 16px;border-bottom:1px solid #f0f2f5;cursor:pointer;transition:background .1s;position:relative}
+.sb-item:hover{background:#f0faf5}
+.sb-item.active{background:#E8F5E9;border-left:3px solid #25D366}
+.sb-item.active .sb-item-title{color:#128C7E}
+.sb-item-title{font-size:13px;font-weight:600;color:#111;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:20px}
+.sb-item-meta{font-size:11px;color:#aaa;display:flex;align-items:center;gap:6px}
+.sb-item-views{font-size:10px;background:#E8F5E9;color:#128C7E;padding:1px 6px;border-radius:8px;font-weight:600}
+.sb-item-del{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:4px;opacity:0;transition:opacity .1s}
+.sb-item:hover .sb-item-del{opacity:1}
+.sb-item-del:hover{color:#C0392B}
+
+/* ── Editor card ── */
 .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .title-row{display:flex;align-items:center;border-bottom:1px solid #e9edef}
 .title-in{flex:1;border:none;outline:none;font-size:17px;font-weight:600;padding:14px 16px;background:transparent;color:#111;font-family:inherit;letter-spacing:-.1px}
@@ -26,7 +54,7 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .tb-sel{border:1px solid #e9edef;background:#fff;color:#111;padding:4px 5px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;font-family:inherit}
 .color-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;display:inline-block;transition:transform .1s}
 .color-dot:hover{transform:scale(1.25)}
-.editor{min-height:380px;max-height:560px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:#111;overflow-y:auto}
+.editor{min-height:360px;max-height:540px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:#111;overflow-y:auto}
 .editor:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
 .editor p{margin-bottom:.45rem}
 .editor h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
@@ -34,44 +62,83 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .editor h3{font-size:15px;font-weight:600;margin-bottom:.35rem}
 .editor ul,.editor ol{padding-left:1.4rem;margin-bottom:.5rem}
 .editor blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
-.editor img{max-width:100%;border-radius:8px;margin:.5rem 0;display:block;cursor:pointer}
-.editor img:hover{outline:2px solid #25D366}
-/* drop zone highlight */
+.editor img{max-width:100%;border-radius:8px;margin:.5rem 0;display:block}
 .editor.dragover{background:#f0faf5;outline:2px dashed #25D366;outline-offset:-4px}
-.fbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #e9edef;background:#f0f2f5}
-.wc{font-size:11px;color:#667781}
+.fbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #e9edef;background:#f0f2f5;gap:8px;flex-wrap:wrap}
+.fbar-left{display:flex;align-items:center;gap:8px}
+.wc{font-size:11px;color:#667781;white-space:nowrap}
+.expiry-sel{border:1px solid #e9edef;background:#fff;color:#667781;padding:4px 7px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;font-family:inherit}
 .fbar-right{display:flex;align-items:center;gap:8px}
 .st{font-size:12px;color:#667781}
 .st.ok{color:#128C7E;font-weight:500}
 .st.err{color:#dc3545;font-weight:500}
-.save-btn{background:#25D366;color:#fff;border:none;padding:9px 20px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .15s}
+.save-btn{background:#25D366;color:#fff;border:none;padding:9px 18px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
 .save-btn:hover{background:#128C7E}
 .save-btn:disabled{opacity:.6;cursor:not-allowed}
-/* hidden file input */
+.update-btn{background:#fff;color:#128C7E;border:2px solid #128C7E;padding:8px 16px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:none;align-items:center;gap:6px;font-family:inherit;transition:all .15s}
+.update-btn:hover{background:#128C7E;color:#fff}
 #img-input{display:none}
-/* share box */
+.draft-bar{background:#FFF9C4;border-bottom:1px solid #F9A825;padding:8px 16px;font-size:12px;color:#5D4037;display:flex;align-items:center;justify-content:space-between}
+.draft-bar button{background:transparent;border:none;color:#5D4037;font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit}
+
+/* ── Share box ── */
 .share-box{margin-top:14px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.share-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-.share-top h3{font-size:14px;font-weight:600;color:#111;margin-bottom:3px}
-.share-top p{font-size:12px;color:#667781}
-.views-badge{background:#f0f2f5;border-radius:10px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:100px;text-align:center}
-.views-num{font-size:28px;font-weight:700;color:#128C7E;line-height:1}
-.views-label{font-size:10px;color:#667781;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-.views-sub{font-size:10px;color:#aaa;margin-top:3px}
+.share-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.share-header h3{font-size:14px;font-weight:600;color:#111}
+.expiry-badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600}
+.expiry-none{background:#E8F5E9;color:#2E7D32}
+.expiry-1d{background:#FFF3E0;color:#E65100}
+.expiry-7d{background:#FFF8E1;color:#F9A825}
+.expiry-1view{background:#FCE4EC;color:#C62828}
+.share-sub{font-size:12px;color:#667781;margin-bottom:12px}
 .link-display{display:flex;align-items:center;background:#f0f2f5;border-radius:10px;padding:11px 14px;gap:10px;margin-bottom:10px}
 .link-val{font-size:13px;color:#128C7E;flex:1;font-weight:500;word-break:break-all}
 .copy-btn{background:#25D366;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0}
-.share-actions{display:flex;gap:8px;flex-wrap:wrap}
-.wa-btn{background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px}
+.share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.wa-btn{background:#25D366;color:#fff;border:none;padding:7px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:5px}
 .wa-btn:hover{background:#1da851}
-.icon-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit;display:flex;align-items:center;gap:5px}
-.icon-btn:hover{background:#f0f2f5}
-/* note read view */
+.icon-btn{background:transparent;border:1px solid #e9edef;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit;display:flex;align-items:center;gap:5px}
+.icon-btn:hover{background:#f0f2f5;color:#111}
+.update-share-btn{background:#128C7E;color:#fff;border:none;padding:7px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:5px;display:none}
+.update-share-btn:hover{background:#0e7266}
+
+/* ── Analytics ── */
+.analytics{border-top:1px solid #e9edef;padding-top:14px;margin-top:4px}
+.analytics-title{font-size:12px;font-weight:600;color:#667781;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.analytics-title span{font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:#aaa}
+.stats-row{display:flex;gap:10px;margin-bottom:14px}
+.stat-box{flex:1;background:#f0f2f5;border-radius:10px;padding:10px 12px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:#128C7E;line-height:1}
+.stat-label{font-size:10px;color:#667781;margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+.sparkline-wrap{margin-bottom:14px}
+.sparkline-label{font-size:11px;color:#667781;margin-bottom:6px;display:flex;justify-content:space-between}
+.sparkline-bars{display:flex;align-items:flex-end;gap:3px;height:48px;background:#f0f2f5;border-radius:8px;padding:8px}
+.spark-bar{flex:1;background:#25D366;border-radius:3px 3px 0 0;min-height:3px;cursor:default}
+.spark-bar:hover{background:#128C7E}
+.spark-bar-empty{background:#e0e0e0}
+.ref-list{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.ref-row{display:flex;align-items:center;gap:8px}
+.ref-name{font-size:12px;color:#111;width:80px;flex-shrink:0;font-weight:500}
+.ref-bar-wrap{flex:1;background:#f0f2f5;border-radius:4px;height:8px;overflow:hidden}
+.ref-bar{background:#25D366;height:100%;border-radius:4px}
+.ref-count{font-size:11px;color:#667781;width:24px;text-align:right;flex-shrink:0}
+
+/* ── QR modal ── */
+.qr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.qr-modal.open{display:flex}
+.qr-card{background:#fff;border-radius:16px;padding:24px;text-align:center;max-width:280px;width:90%}
+.qr-card h4{font-size:15px;font-weight:600;color:#111;margin-bottom:4px}
+.qr-card p{font-size:12px;color:#667781;margin-bottom:16px}
+#qr-box{display:flex;justify-content:center;margin-bottom:16px}
+.qr-close{background:#f0f2f5;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#667781;font-family:inherit}
+
+/* ── Read view ── */
 .note-view{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);animation:fadeup .25s ease}
 @keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .nv-head{padding:20px 20px 14px;border-bottom:1px solid #e9edef}
 .nv-badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}
 .nv-title{font-size:21px;font-weight:700;color:#111;line-height:1.3}
+.nv-meta{font-size:12px;color:#aaa;margin-top:4px}
 .nv-body{padding:18px 20px;font-size:15px;line-height:1.7;color:#111}
 .nv-body p{margin-bottom:.45rem}
 .nv-body h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
@@ -79,15 +146,23 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .nv-body ul,.nv-body ol{padding-left:1.4rem;margin-bottom:.5rem}
 .nv-body blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
 .nv-body img{max-width:100%;border-radius:8px;margin:.5rem 0;display:block}
-.nv-foot{padding:10px 20px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.nv-foot{padding:10px 20px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .write-own{background:#25D366;color:#fff;border:none;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .write-own:hover{background:#128C7E}
+.expired-box{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;padding:20px;border-radius:12px;text-align:center}
+.expired-box h3{font-size:16px;font-weight:600;margin-bottom:6px}
 .err-box{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:14px}
 .loading{text-align:center;padding:60px 20px;color:#667781;font-size:15px}
-@media(max-width:560px){main{padding:14px 10px 40px}.save-btn span{display:none}.share-top{flex-direction:column}.views-badge{flex-direction:row;min-width:unset;align-self:stretch;justify-content:center;gap:10px}}
+
+@media(max-width:820px){
+  .sidebar{display:none!important}
+  .layout{padding:14px 10px 40px}
+}
+@media(max-width:560px){.save-btn span{display:none}.stats-row{flex-wrap:wrap}.stat-box{min-width:calc(50% - 5px)}}
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
     <div class="logo-icon">
@@ -95,128 +170,275 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
     </div>
     <div><div class="logo-name">Inkwell</div><div class="logo-sub">Your personal notebook</div></div>
   </div>
-  <button class="new-note-btn" onclick="goWrite()">+ Write a note</button>
+  <div class="header-right">
+    <button class="hdr-btn" onclick="toggleHistory()" id="history-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      History <span class="badge" id="history-count">0</span>
+    </button>
+    <button class="hdr-btn" onclick="newNote()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New note
+    </button>
+  </div>
 </header>
 
-<main>
-  <div id="loading" class="loading" style="display:none">Opening note…</div>
+<!-- QR Modal -->
+<div class="qr-modal" id="qr-modal" onclick="if(event.target===this)closeQR()">
+  <div class="qr-card">
+    <h4>Scan to open note</h4>
+    <p>Works on any phone camera</p>
+    <div id="qr-box"></div>
+    <button class="qr-close" onclick="closeQR()">Close</button>
+  </div>
+</div>
 
-  <!-- WRITE PANEL -->
-  <div id="write-panel">
-    <div class="card">
-      <div class="title-row">
-        <input class="title-in" id="note-title" placeholder="Note title…" />
+<div class="layout">
+  <!-- ── HISTORY SIDEBAR ── -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <span class="sb-title">Your Notes</span>
+      <button class="sb-clear" onclick="if(confirm('Clear all history?'))clearHistory()">Clear all</button>
+    </div>
+    <div id="sb-list" class="sb-list">
+      <div class="sb-empty">No notes yet.<br>Save your first note to see it here.</div>
+    </div>
+  </div>
+
+  <!-- ── MAIN COLUMN ── -->
+  <div class="main-col">
+    <div id="loading" class="loading" style="display:none">Opening note…</div>
+
+    <!-- WRITE PANEL -->
+    <div id="write-panel">
+      <div id="draft-bar" class="draft-bar" style="display:none">
+        <span>📝 Draft restored from last session</span>
+        <button onclick="clearDraft()">Dismiss</button>
       </div>
-      <div class="toolbar">
-        <select class="tb-sel" onchange="xCmd('formatBlock',this.value);this.value='p'">
-          <option value="p">Normal</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="blockquote">Quote</option>
-        </select>
-        <select class="tb-sel" onchange="xCmd('fontSize',this.value)">
-          <option value="2">Small</option><option value="3" selected>Normal</option><option value="4">Medium</option><option value="5">Large</option><option value="6">XL</option>
-        </select>
-        <div class="sep"></div>
-        <button class="tb" onclick="xCmd('bold')"><b>B</b></button>
-        <button class="tb" onclick="xCmd('italic')"><i>I</i></button>
-        <button class="tb" onclick="xCmd('underline')"><u>U</u></button>
-        <button class="tb" onclick="xCmd('strikeThrough')"><s>S</s></button>
-        <div class="sep"></div>
-        <button class="tb" onclick="xCmd('justifyLeft')">⬛</button>
-        <button class="tb" onclick="xCmd('justifyCenter')" style="font-size:11px">≡</button>
-        <button class="tb" onclick="xCmd('justifyRight')">⬛</button>
-        <div class="sep"></div>
-        <button class="tb" onclick="xCmd('insertUnorderedList')">• —</button>
-        <button class="tb" onclick="xCmd('insertOrderedList')">1.</button>
-        <div class="sep"></div>
-        <span style="font-size:11px;color:#aaa;margin-right:3px">Text:</span>
-        <span class="color-dot" style="background:#1A1A1A" onclick="setFg('#1A1A1A')"></span>
-        <span class="color-dot" style="background:#128C7E" onclick="setFg('#128C7E')"></span>
-        <span class="color-dot" style="background:#C0392B" onclick="setFg('#C0392B')"></span>
-        <span class="color-dot" style="background:#D4A017" onclick="setFg('#D4A017')"></span>
-        <span class="color-dot" style="background:#2980B9" onclick="setFg('#2980B9')"></span>
-        <span class="color-dot" style="background:#8E44AD" onclick="setFg('#8E44AD')"></span>
-        <span class="color-dot" style="background:#E67E22" onclick="setFg('#E67E22')"></span>
-        <div class="sep"></div>
-        <span style="font-size:11px;color:#aaa;margin-right:3px">Mark:</span>
-        <span class="color-dot" style="background:#FFF3CD" onclick="setHl('#FFF3CD')"></span>
-        <span class="color-dot" style="background:#D4EDDA" onclick="setHl('#D4EDDA')"></span>
-        <span class="color-dot" style="background:#FCE4EC" onclick="setHl('#FCE4EC')"></span>
-        <span class="color-dot" style="background:#E3F2FD" onclick="setHl('#E3F2FD')"></span>
-        <span class="color-dot" style="background:#F3E5F5" onclick="setHl('#F3E5F5')"></span>
-        <span class="color-dot" style="background:transparent;border:1.5px dashed #ccc" onclick="setHl('transparent')"></span>
-        <div class="sep"></div>
-        <!-- Image upload button -->
-        <button class="tb" onclick="document.getElementById('img-input').click()" title="Insert image" style="font-size:16px">🖼</button>
-        <input type="file" id="img-input" accept="image/*" onchange="insertImageFile(this)">
-        <div class="sep"></div>
-        <button class="tb" onclick="xCmd('removeFormat')">✕</button>
-        <button class="tb" onclick="xCmd('undo')">↩</button>
-        <button class="tb" onclick="xCmd('redo')">↪</button>
+      <div class="card">
+        <div class="title-row">
+          <input class="title-in" id="note-title" placeholder="Note title…" oninput="scheduleDraftSave()" />
+        </div>
+        <div class="toolbar">
+          <select class="tb-sel" onchange="xCmd('formatBlock',this.value);this.value='p'">
+            <option value="p">Normal</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="blockquote">Quote</option>
+          </select>
+          <select class="tb-sel" onchange="xCmd('fontSize',this.value)">
+            <option value="2">Small</option><option value="3" selected>Normal</option><option value="4">Medium</option><option value="5">Large</option><option value="6">XL</option>
+          </select>
+          <div class="sep"></div>
+          <button class="tb" onclick="xCmd('bold')"><b>B</b></button>
+          <button class="tb" onclick="xCmd('italic')"><i>I</i></button>
+          <button class="tb" onclick="xCmd('underline')"><u>U</u></button>
+          <button class="tb" onclick="xCmd('strikeThrough')"><s>S</s></button>
+          <div class="sep"></div>
+          <button class="tb" onclick="xCmd('justifyLeft')">⬛</button>
+          <button class="tb" onclick="xCmd('justifyCenter')" style="font-size:11px">≡</button>
+          <button class="tb" onclick="xCmd('justifyRight')">⬛</button>
+          <div class="sep"></div>
+          <button class="tb" onclick="xCmd('insertUnorderedList')">•—</button>
+          <button class="tb" onclick="xCmd('insertOrderedList')">1.</button>
+          <div class="sep"></div>
+          <span style="font-size:11px;color:#aaa;margin-right:2px">Text:</span>
+          <span class="color-dot" style="background:#1A1A1A" onclick="setFg('#1A1A1A')"></span>
+          <span class="color-dot" style="background:#128C7E" onclick="setFg('#128C7E')"></span>
+          <span class="color-dot" style="background:#C0392B" onclick="setFg('#C0392B')"></span>
+          <span class="color-dot" style="background:#D4A017" onclick="setFg('#D4A017')"></span>
+          <span class="color-dot" style="background:#2980B9" onclick="setFg('#2980B9')"></span>
+          <span class="color-dot" style="background:#8E44AD" onclick="setFg('#8E44AD')"></span>
+          <span class="color-dot" style="background:#E67E22" onclick="setFg('#E67E22')"></span>
+          <div class="sep"></div>
+          <span style="font-size:11px;color:#aaa;margin-right:2px">Mark:</span>
+          <span class="color-dot" style="background:#FFF3CD" onclick="setHl('#FFF3CD')"></span>
+          <span class="color-dot" style="background:#D4EDDA" onclick="setHl('#D4EDDA')"></span>
+          <span class="color-dot" style="background:#FCE4EC" onclick="setHl('#FCE4EC')"></span>
+          <span class="color-dot" style="background:#E3F2FD" onclick="setHl('#E3F2FD')"></span>
+          <span class="color-dot" style="background:#F3E5F5" onclick="setHl('#F3E5F5')"></span>
+          <span class="color-dot" style="background:transparent;border:1.5px dashed #ccc" onclick="setHl('transparent')"></span>
+          <div class="sep"></div>
+          <button class="tb" title="Insert image" onclick="document.getElementById('img-input').click()" style="font-size:15px">🖼</button>
+          <input type="file" id="img-input" accept="image/*" onchange="insertImageFile(this)">
+          <div class="sep"></div>
+          <button class="tb" onclick="xCmd('removeFormat')">✕</button>
+          <button class="tb" onclick="xCmd('undo')">↩</button>
+          <button class="tb" onclick="xCmd('redo')">↪</button>
+        </div>
+        <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message… drag & drop images here too" oninput="onEdit();scheduleDraftSave()"></div>
+        <div class="fbar">
+          <div class="fbar-left">
+            <span class="wc" id="wc">0 words</span>
+            <select class="expiry-sel" id="expiry-sel">
+              <option value="none">Never expires</option>
+              <option value="7d">Expires in 7 days</option>
+              <option value="1d">Expires in 24 hours</option>
+              <option value="1view">Self-destructs after 1 view</option>
+            </select>
+          </div>
+          <div class="fbar-right">
+            <span id="st" class="st"></span>
+            <button class="update-btn" id="update-btn" onclick="saveNote()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Update note
+            </button>
+            <button class="save-btn" id="save-btn" onclick="saveNote()">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 3h9l3 3v8a.5.5 0 01-.5.5H2.5A.5.5 0 012 14V3.5A.5.5 0 012 3z" stroke="white" stroke-width="1.2"/><rect x="4" y="2" width="5" height="3" rx=".3" fill="white" opacity=".8"/><rect x="3" y="8" width="9" height="4.5" rx=".3" fill="white" opacity=".55"/></svg>
+              <span>Save &amp; Share</span>
+            </button>
+          </div>
+        </div>
       </div>
-      <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message… drag & drop images here too" oninput="onEdit()"></div>
-      <div class="fbar">
-        <span class="wc" id="wc">0 words</span>
-        <div class="fbar-right">
-          <span id="st" class="st"></span>
-          <button class="save-btn" id="save-btn" onclick="saveNote()">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 3h9l3 3v8a.5.5 0 01-.5.5H2.5A.5.5 0 012 14V3.5A.5.5 0 012 3z" stroke="white" stroke-width="1.2"/><rect x="4" y="2" width="5" height="3" rx=".3" fill="white" opacity=".8"/><rect x="3" y="8" width="9" height="4.5" rx=".3" fill="white" opacity=".55"/></svg>
-            <span>Save &amp; Share</span>
+
+      <div id="share-box" class="share-box" style="display:none">
+        <div class="share-header">
+          <h3>Note saved!</h3>
+          <span class="expiry-badge" id="expiry-badge"></span>
+        </div>
+        <div class="share-sub">Anyone who taps the link reads instantly — no app, no login.</div>
+        <div class="link-display">
+          <span class="link-val" id="share-link"></span>
+          <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy link</button>
+        </div>
+        <div class="share-actions">
+          <button class="wa-btn" onclick="shareWA()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.428a.75.75 0 00.915.915l5.571-1.476A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.707 9.707 0 01-4.953-1.358l-.355-.211-3.677.974.974-3.677-.211-.355A9.707 9.707 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+            WhatsApp
           </button>
+          <button class="icon-btn" onclick="showQR()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="4" height="4"/></svg>
+            QR Code
+          </button>
+          <button class="update-share-btn" id="update-share-btn" onclick="scrollToEditor()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit &amp; update
+          </button>
+          <button class="icon-btn" onclick="downloadHtml()">↓ HTML</button>
+        </div>
+        <div class="analytics">
+          <div class="analytics-title">Analytics <span id="last-refreshed"></span></div>
+          <div class="stats-row">
+            <div class="stat-box"><div class="stat-num" id="stat-views">0</div><div class="stat-label">Total Views</div></div>
+            <div class="stat-box"><div class="stat-num" id="stat-unique">0</div><div class="stat-label">Unique</div></div>
+            <div class="stat-box" style="flex:2"><div class="stat-num" id="stat-last" style="font-size:12px;font-weight:500;color:#667781;line-height:1.4">—</div><div class="stat-label">Last Viewed</div></div>
+          </div>
+          <div class="sparkline-wrap">
+            <div class="sparkline-label"><span>Last 14 days</span><span id="spark-range"></span></div>
+            <div class="sparkline-bars" id="sparkline"></div>
+          </div>
+          <div class="ref-list" id="ref-list"></div>
+          <div style="margin-top:10px;text-align:right">
+            <button class="icon-btn" style="font-size:11px;padding:4px 10px;display:inline-flex" onclick="refreshStats()">↻ Refresh</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Share + views panel (owner only) -->
-    <div id="share-box" class="share-box" style="display:none">
-      <div class="share-top">
-        <div>
-          <h3>Note saved! Share this link</h3>
-          <p>Anyone who taps it reads instantly — no app, no login, nothing.</p>
-        </div>
-        <div class="views-badge">
-          <div class="views-num" id="views-num">0</div>
-          <div class="views-label">Views</div>
-          <div class="views-sub" id="views-sub">no views yet</div>
-        </div>
+    <!-- READ PANEL -->
+    <div id="read-panel" style="display:none">
+      <div id="view-err" class="err-box" style="display:none"></div>
+      <div id="expired-box" class="expired-box" style="display:none">
+        <h3>🔥 Note expired</h3>
+        <p id="expired-msg"></p>
       </div>
-      <div class="link-display">
-        <span class="link-val" id="share-link"></span>
-        <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy link</button>
-      </div>
-      <div class="share-actions">
-        <button class="wa-btn" onclick="shareWA()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.428a.75.75 0 00.915.915l5.571-1.476A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.707 9.707 0 01-4.953-1.358l-.355-.211-3.677.974.974-3.677-.211-.355A9.707 9.707 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
-          WhatsApp
-        </button>
-        <button class="icon-btn" onclick="refreshViews()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-          Refresh views
-        </button>
-        <button class="icon-btn" onclick="downloadHtml()">↓ HTML</button>
+      <div id="note-view" class="note-view" style="display:none">
+        <div class="nv-head">
+          <div class="nv-badge">Inkwell Note</div>
+          <div class="nv-title" id="vt"></div>
+          <div class="nv-meta" id="vmeta"></div>
+        </div>
+        <div class="nv-body" id="vc"></div>
+        <div class="nv-foot">
+          <span id="vm"></span>
+          <button class="write-own" onclick="goWrite()">Write your own note</button>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- READ PANEL — no view count shown to reader -->
-  <div id="read-panel" style="display:none">
-    <div id="view-err" class="err-box" style="display:none"></div>
-    <div id="note-view" class="note-view" style="display:none">
-      <div class="nv-head">
-        <div class="nv-badge">Inkwell Note</div>
-        <div class="nv-title" id="vt"></div>
-      </div>
-      <div class="nv-body" id="vc"></div>
-      <div class="nv-foot">
-        <span id="vm"></span>
-        <button class="write-own" onclick="goWrite()">Write your own note</button>
-      </div>
-    </div>
-  </div>
-</main>
+  </div><!-- end main-col -->
+</div><!-- end layout -->
 
 <script>
-let curId = null, curData = null, statsInterval = null;
+let curId = null, curData = null, statsInterval = null, draftTimer = null;
 
-// ── Routing ──────────────────────────────────────────────────────
+// ── History (localStorage) ─────────────────────────────────────────────────
+const HISTORY_KEY = 'inkwell_history';
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function saveHistory(arr) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(0, 50))); } catch {}
+}
+function addToHistory(note) {
+  let h = getHistory().filter(n => n.id !== note.id); // dedupe
+  h.unshift({ id: note.id, title: note.title, savedAt: note.savedAt, views: 0 });
+  saveHistory(h);
+  renderHistory();
+}
+function renderHistory() {
+  const h = getHistory();
+  document.getElementById('history-count').textContent = h.length;
+  const list = document.getElementById('sb-list');
+  if (!h.length) {
+    list.innerHTML = '<div class="sb-empty">No notes yet.<br>Save your first note to see it here.</div>';
+    return;
+  }
+  list.innerHTML = h.map(n => `
+    <div class="sb-item ${curId === n.id ? 'active' : ''}" onclick="openFromHistory('${n.id}')" data-id="${n.id}">
+      <div class="sb-item-title">${n.title || 'Untitled Note'}</div>
+      <div class="sb-item-meta">
+        <span>${n.savedAt || ''}</span>
+        ${n.views ? `<span class="sb-item-views">${n.views} view${n.views !== 1 ? 's' : ''}</span>` : ''}
+      </div>
+      <button class="sb-item-del" onclick="event.stopPropagation();deleteFromHistory('${n.id}')" title="Remove from history">✕</button>
+    </div>`).join('');
+}
+function deleteFromHistory(id) {
+  saveHistory(getHistory().filter(n => n.id !== id));
+  renderHistory();
+  if (curId === id) { curId = null; curData = null; }
+}
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+}
+function toggleHistory() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('open');
+}
+async function openFromHistory(id) {
+  // Fetch note from server and load into editor
+  setSt('Loading…');
+  try {
+    const res = await fetch('/api/note/' + id + '?preview=1');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    curId = id;
+    curData = { id, title: data.title, content: data.content, savedAt: data.savedAt };
+    document.getElementById('note-title').value = data.title;
+    document.getElementById('editor').innerHTML = data.content;
+    onEdit();
+    // Restore share panel
+    const shareUrl = location.origin + '/note/' + id;
+    document.getElementById('share-link').textContent = shareUrl;
+    document.getElementById('share-box').style.display = 'block';
+    document.getElementById('save-btn').style.display = 'none';
+    document.getElementById('update-btn').style.display = 'flex';
+    document.getElementById('update-share-btn').style.display = 'flex';
+    setSt('');
+    renderHistory(); // highlight active
+    clearInterval(statsInterval);
+    statsInterval = setInterval(refreshStats, 30000);
+    refreshStats();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(e) {
+    setSt('Could not load note', 'err');
+  }
+}
+function updateHistoryViews(id, views) {
+  const h = getHistory();
+  const item = h.find(n => n.id === id);
+  if (item) { item.views = views; saveHistory(h); renderHistory(); }
+}
+
+// ── Routing ───────────────────────────────────────────────────────────────
 const pathCode = location.pathname.match(/^\/note\/([A-Z0-9]{8})$/i)?.[1]?.toUpperCase();
 if (pathCode) {
   document.getElementById('write-panel').style.display = 'none';
@@ -224,6 +446,8 @@ if (pathCode) {
   document.getElementById('loading').style.display = 'block';
   loadNote(pathCode);
 } else {
+  restoreDraft();
+  renderHistory();
   setTimeout(() => document.getElementById('editor').focus(), 100);
 }
 
@@ -235,7 +459,63 @@ function goWrite() {
   document.getElementById('editor').focus();
 }
 
-// ── Editor ───────────────────────────────────────────────────────
+function newNote() {
+  const hasContent = document.getElementById('editor').innerText.trim() || document.getElementById('note-title').value.trim();
+  if (hasContent && !curId && !confirm('Start a new note? Your unsaved content will be lost.')) return;
+  // Reset editor
+  curId = null; curData = null;
+  document.getElementById('note-title').value = '';
+  document.getElementById('editor').innerHTML = '';
+  document.getElementById('share-box').style.display = 'none';
+  document.getElementById('save-btn').style.display = 'flex';
+  document.getElementById('update-btn').style.display = 'none';
+  document.getElementById('update-share-btn').style.display = 'none';
+  document.getElementById('expiry-sel').value = 'none';
+  document.getElementById('st').textContent = '';
+  document.getElementById('draft-bar').style.display = 'none';
+  clearInterval(statsInterval);
+  onEdit();
+  renderHistory();
+  // Make sure write panel is visible
+  document.getElementById('read-panel').style.display = 'none';
+  document.getElementById('write-panel').style.display = 'block';
+  setTimeout(() => { document.getElementById('note-title').focus(); }, 100);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToEditor() {
+  document.getElementById('note-title').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('editor').focus();
+}
+
+// ── Auto-save draft ─────────────────────────────────────────────────────────
+function scheduleDraftSave() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 5000); }
+function saveDraft() {
+  if (curId) return; // don't overwrite draft when editing existing note
+  const title = document.getElementById('note-title').value;
+  const content = document.getElementById('editor').innerHTML;
+  if (!title && !document.getElementById('editor').innerText.trim()) return;
+  try { localStorage.setItem('inkwell_draft', JSON.stringify({ title, content, ts: Date.now() })); } catch {}
+}
+function restoreDraft() {
+  try {
+    const raw = localStorage.getItem('inkwell_draft');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (!d || Date.now() - d.ts > 7 * 86400000) return;
+    if (!d.title && !d.content) return;
+    document.getElementById('note-title').value = d.title || '';
+    document.getElementById('editor').innerHTML = d.content || '';
+    onEdit();
+    document.getElementById('draft-bar').style.display = 'flex';
+  } catch {}
+}
+function clearDraft() {
+  localStorage.removeItem('inkwell_draft');
+  document.getElementById('draft-bar').style.display = 'none';
+}
+
+// ── Editor ─────────────────────────────────────────────────────────────────
 function xCmd(cmd, val = null) { document.getElementById('editor').focus(); document.execCommand(cmd, false, val); onEdit(); }
 function setFg(c) { document.getElementById('editor').focus(); document.execCommand('foreColor', false, c); }
 function setHl(c) { document.getElementById('editor').focus(); document.execCommand('hiliteColor', false, c); }
@@ -247,106 +527,128 @@ function onEdit() {
 function setSt(msg, cls = '') {
   const el = document.getElementById('st');
   el.textContent = msg; el.className = 'st ' + cls;
-  if (cls !== 'err') setTimeout(() => { el.textContent = ''; el.className = 'st'; }, 3000);
+  if (cls !== 'err' && msg) setTimeout(() => { if (el.textContent === msg) { el.textContent = ''; el.className = 'st'; } }, 3000);
 }
 
-// ── Image insertion ───────────────────────────────────────────────
+// ── Image upload ────────────────────────────────────────────────────────────
 function insertImageFile(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const file = input.files[0]; if (!file) return;
   if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
   const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('editor').focus();
-    document.execCommand('insertHTML', false, `<img src="${e.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
-    onEdit();
-  };
-  reader.readAsDataURL(file);
-  input.value = ''; // reset so same file can be picked again
+  reader.onload = (e) => { document.getElementById('editor').focus(); document.execCommand('insertHTML', false, `<img src="${e.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`); onEdit(); };
+  reader.readAsDataURL(file); input.value = '';
 }
-
-// Drag & drop images into editor
 const editor = document.getElementById('editor');
-editor.addEventListener('dragover', (e) => { e.preventDefault(); editor.classList.add('dragover'); });
+editor.addEventListener('dragover', e => { e.preventDefault(); editor.classList.add('dragover'); });
 editor.addEventListener('dragleave', () => editor.classList.remove('dragover'));
-editor.addEventListener('drop', (e) => {
-  e.preventDefault();
-  editor.classList.remove('dragover');
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-  files.forEach(file => {
-    if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      editor.focus();
-      document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
-      onEdit();
-    };
-    reader.readAsDataURL(file);
+editor.addEventListener('drop', e => {
+  e.preventDefault(); editor.classList.remove('dragover');
+  Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).forEach(file => {
+    if (file.size > 4 * 1024 * 1024) { setSt('Image too large', 'err'); return; }
+    const r = new FileReader();
+    r.onload = ev => { editor.focus(); document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`); onEdit(); };
+    r.readAsDataURL(file);
   });
 });
-
-// Paste images from clipboard
-editor.addEventListener('paste', (e) => {
-  const items = Array.from(e.clipboardData.items || []);
-  const imgItem = items.find(i => i.type.startsWith('image/'));
-  if (!imgItem) return;
-  e.preventDefault();
-  const file = imgItem.getAsFile();
-  if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
-    onEdit();
-  };
-  reader.readAsDataURL(file);
+editor.addEventListener('paste', e => {
+  const img = Array.from(e.clipboardData.items || []).find(i => i.type.startsWith('image/'));
+  if (!img) return; e.preventDefault();
+  const file = img.getAsFile();
+  if (file.size > 4 * 1024 * 1024) { setSt('Image too large', 'err'); return; }
+  const r = new FileReader();
+  r.onload = ev => { document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`); onEdit(); };
+  r.readAsDataURL(file);
 });
 
-// ── Save ─────────────────────────────────────────────────────────
+// ── Save / Update ───────────────────────────────────────────────────────────
 async function saveNote() {
   const title = document.getElementById('note-title').value.trim() || 'Untitled Note';
   const content = document.getElementById('editor').innerHTML;
-  if (!document.getElementById('editor').innerText.trim() && !document.getElementById('editor').querySelector('img')) {
-    setSt('Write something first!', 'err'); return;
-  }
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; setSt('Saving…');
+  const hasText = document.getElementById('editor').innerText.trim();
+  const hasImg = document.getElementById('editor').querySelector('img');
+  if (!hasText && !hasImg) { setSt('Write something first!', 'err'); return; }
+  const expiry = document.getElementById('expiry-sel').value;
+  const isUpdate = !!curId;
+  const btn = isUpdate ? document.getElementById('update-btn') : document.getElementById('save-btn');
+  btn.disabled = true; setSt(isUpdate ? 'Updating…' : 'Saving…');
   try {
     const res = await fetch('/api/save', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, id: curId }),
+      body: JSON.stringify({ title, content, id: curId, expiry }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
+    if (!res.ok) throw new Error(data.error || 'Server error');
     curId = data.id;
     curData = { id: data.id, title, content, savedAt: data.savedAt };
     const shareUrl = location.origin + '/note/' + data.id;
-    setSt('Saved!', 'ok');
+    setSt(isUpdate ? 'Updated!' : 'Saved!', 'ok');
+    clearDraft();
+    addToHistory({ id: data.id, title, savedAt: data.savedAt });
+    document.getElementById('save-btn').style.display = 'none';
+    document.getElementById('update-btn').style.display = 'flex';
+    document.getElementById('update-share-btn').style.display = 'flex';
     document.getElementById('share-link').textContent = shareUrl;
+    setExpiryBadge(expiry);
     document.getElementById('share-box').style.display = 'block';
     document.getElementById('share-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    updateViewsBadge(0, null);
     clearInterval(statsInterval);
-    statsInterval = setInterval(refreshViews, 30000);
+    statsInterval = setInterval(refreshStats, 30000);
+    refreshStats();
   } catch (err) {
     console.error('Save failed:', err);
     setSt('Save failed: ' + err.message, 'err');
   } finally { btn.disabled = false; }
 }
 
-function updateViewsBadge(views, lastViewedAt) {
-  document.getElementById('views-num').textContent = views;
-  document.getElementById('views-sub').textContent = lastViewedAt ? 'Last: ' + lastViewedAt : 'no views yet';
+function setExpiryBadge(expiry) {
+  const b = document.getElementById('expiry-badge');
+  const map = { none: ['Never expires', 'expiry-none'], '7d': ['Expires 7 days', 'expiry-7d'], '1d': ['Expires 24h', 'expiry-1d'], '1view': ['Self-destructs after 1 view', 'expiry-1view'] };
+  const [text, cls] = map[expiry] || map.none;
+  b.textContent = text; b.className = 'expiry-badge ' + cls;
 }
-async function refreshViews() {
+
+// ── Analytics ───────────────────────────────────────────────────────────────
+async function refreshStats() {
   if (!curId) return;
   try {
     const res = await fetch('/api/stats/' + curId);
-    const data = await res.json();
-    if (res.ok) updateViewsBadge(data.views, data.lastViewedAt);
-  } catch(e) {}
+    const d = await res.json();
+    if (!res.ok) return;
+    document.getElementById('stat-views').textContent = d.views;
+    document.getElementById('stat-unique').textContent = d.uniqueViews;
+    document.getElementById('stat-last').textContent = d.lastViewedAt || 'No views yet';
+    renderSparkline(d.dailyViews || {});
+    renderReferrers(d.referrers || {});
+    updateHistoryViews(curId, d.views);
+    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-refreshed').textContent = 'Updated ' + now;
+  } catch {}
+}
+function renderSparkline(dv) {
+  const vals = [], labels = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    const k = d.toISOString().slice(0, 10);
+    labels.push(k.slice(5)); vals.push(dv[k] || 0);
+  }
+  const max = Math.max(...vals, 1);
+  document.getElementById('sparkline').innerHTML = vals.map((v, i) =>
+    `<div class="spark-bar ${v === 0 ? 'spark-bar-empty' : ''}" style="height:${Math.max((v/max)*100, v > 0 ? 8 : 3)}%" title="${labels[i]}: ${v} view${v !== 1 ? 's' : ''}"></div>`
+  ).join('');
+  document.getElementById('spark-range').textContent = labels[0] + ' → ' + labels[13];
+}
+function renderReferrers(refs) {
+  const entries = Object.entries(refs).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  if (!entries.length) { document.getElementById('ref-list').innerHTML = '<div style="font-size:12px;color:#aaa">No traffic sources yet</div>'; return; }
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  document.getElementById('ref-list').innerHTML =
+    `<div style="font-size:11px;color:#667781;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Traffic sources</div>` +
+    entries.map(([name, count]) =>
+      `<div class="ref-row"><div class="ref-name">${name}</div><div class="ref-bar-wrap"><div class="ref-bar" style="width:${(count/total*100).toFixed(0)}%"></div></div><div class="ref-count">${count}</div></div>`
+    ).join('');
 }
 
-// ── Share helpers ────────────────────────────────────────────────
+// ── Share helpers ───────────────────────────────────────────────────────────
 function copyLink() {
   navigator.clipboard.writeText(document.getElementById('share-link').textContent).then(() => {
     const b = document.getElementById('copy-btn');
@@ -358,34 +660,45 @@ function shareWA() {
   const title = document.getElementById('note-title').value.trim() || 'My note';
   window.open('https://wa.me/?text=' + encodeURIComponent(title + '\n' + url), '_blank');
 }
+function showQR() {
+  document.getElementById('qr-modal').classList.add('open');
+  const box = document.getElementById('qr-box'); box.innerHTML = '';
+  if (window.QRCode) new QRCode(box, { text: document.getElementById('share-link').textContent, width: 180, height: 180, colorDark: '#128C7E', colorLight: '#fff' });
+}
+function closeQR() { document.getElementById('qr-modal').classList.remove('open'); }
 function downloadHtml() {
   if (!curData) return;
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${curData.title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 14px}.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}.nv-title{font-size:20px;font-weight:700;color:#111}.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}.nc p{margin-bottom:.45rem}.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}.nc img{max-width:100%;border-radius:8px;margin:.5rem 0}.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}@media(max-width:560px){.nh,.nc,.nf{padding-left:14px;padding-right:14px}}</style></head><body><div class="note"><div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div><div class="nc">${curData.content}</div><div class="nf">Saved ${curData.savedAt} &middot; Made with Inkwell</div></div></body></html>`;
-  const b = new Blob([html], { type: 'text/html' });
-  const u = URL.createObjectURL(b);
-  const a = document.createElement('a'); a.href = u;
-  a.download = (curData.title || 'note').replace(/[^a-z0-9]/gi, '_') + '.html';
-  a.click(); URL.revokeObjectURL(u);
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${curData.title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 14px}.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}.nv-title{font-size:20px;font-weight:700;color:#111}.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}.nc p{margin-bottom:.45rem}.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}.nc img{max-width:100%;border-radius:8px;margin:.5rem 0}.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}</style></head><body><div class="note"><div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div><div class="nc">${curData.content}</div><div class="nf">Saved ${curData.savedAt} &middot; Made with Inkwell</div></div></body></html>`;
+  const b = new Blob([html], { type: 'text/html' }); const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = u; a.download = (curData.title || 'note').replace(/[^a-z0-9]/gi, '_') + '.html'; a.click(); URL.revokeObjectURL(u);
 }
 
-// ── Load note (read mode) — no view count shown ───────────────────
+// ── Read mode ───────────────────────────────────────────────────────────────
+function readingTime(html) {
+  const words = html.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  return '~' + Math.max(1, Math.ceil(words / 200)) + ' min read';
+}
 async function loadNote(code) {
   try {
     const res = await fetch('/api/note/' + code);
-    const data = await res.json();
     document.getElementById('loading').style.display = 'none';
+    if (res.status === 410) {
+      const d = await res.json();
+      document.getElementById('expired-box').style.display = 'block';
+      document.getElementById('expired-msg').textContent = d.error; return;
+    }
+    const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Not found');
     document.title = data.title + ' — Inkwell';
     document.getElementById('vt').textContent = data.title;
     document.getElementById('vc').innerHTML = data.content;
-    // Only show save date — no view count for readers
-    document.getElementById('vm').textContent = 'Saved ' + data.savedAt;
+    document.getElementById('vmeta').textContent = readingTime(data.content);
+    document.getElementById('vm').textContent = (data.updatedAt ? 'Updated ' + data.updatedAt : 'Saved ' + data.savedAt);
     document.getElementById('note-view').style.display = 'block';
   } catch (e) {
     document.getElementById('loading').style.display = 'none';
-    const err = document.getElementById('view-err');
-    err.textContent = 'Note not found — this link may be wrong or expired.';
-    err.style.display = 'block';
+    document.getElementById('view-err').textContent = 'Note not found — this link may be wrong or expired.';
+    document.getElementById('view-err').style.display = 'block';
   }
 }
 </script>
