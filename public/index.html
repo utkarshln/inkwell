@@ -26,7 +26,7 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .tb-sel{border:1px solid #e9edef;background:#fff;color:#111;padding:4px 5px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;font-family:inherit}
 .color-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;display:inline-block;transition:transform .1s}
 .color-dot:hover{transform:scale(1.25)}
-.editor{min-height:380px;max-height:520px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:#111;overflow-y:auto}
+.editor{min-height:380px;max-height:560px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:#111;overflow-y:auto}
 .editor:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
 .editor p{margin-bottom:.45rem}
 .editor h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
@@ -34,6 +34,10 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .editor h3{font-size:15px;font-weight:600;margin-bottom:.35rem}
 .editor ul,.editor ol{padding-left:1.4rem;margin-bottom:.5rem}
 .editor blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
+.editor img{max-width:100%;border-radius:8px;margin:.5rem 0;display:block;cursor:pointer}
+.editor img:hover{outline:2px solid #25D366}
+/* drop zone highlight */
+.editor.dragover{background:#f0faf5;outline:2px dashed #25D366;outline-offset:-4px}
 .fbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #e9edef;background:#f0f2f5}
 .wc{font-size:11px;color:#667781}
 .fbar-right{display:flex;align-items:center;gap:8px}
@@ -43,31 +47,26 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .save-btn{background:#25D366;color:#fff;border:none;padding:9px 20px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .15s}
 .save-btn:hover{background:#128C7E}
 .save-btn:disabled{opacity:.6;cursor:not-allowed}
-
-/* Share box */
+/* hidden file input */
+#img-input{display:none}
+/* share box */
 .share-box{margin-top:14px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .share-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .share-top h3{font-size:14px;font-weight:600;color:#111;margin-bottom:3px}
 .share-top p{font-size:12px;color:#667781}
-
-/* View counter badge */
-.views-badge{background:#f0f2f5;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:110px;text-align:center;flex-direction:column}
+.views-badge{background:#f0f2f5;border-radius:10px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:100px;text-align:center}
 .views-num{font-size:28px;font-weight:700;color:#128C7E;line-height:1}
 .views-label{font-size:10px;color:#667781;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 .views-sub{font-size:10px;color:#aaa;margin-top:3px}
-
 .link-display{display:flex;align-items:center;background:#f0f2f5;border-radius:10px;padding:11px 14px;gap:10px;margin-bottom:10px}
 .link-val{font-size:13px;color:#128C7E;flex:1;font-weight:500;word-break:break-all}
 .copy-btn{background:#25D366;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0}
 .share-actions{display:flex;gap:8px;flex-wrap:wrap}
 .wa-btn{background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px}
 .wa-btn:hover{background:#1da851}
-.dl-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit}
-.dl-btn:hover{background:#f0f2f5}
-.refresh-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit;display:flex;align-items:center;gap:5px}
-.refresh-btn:hover{background:#f0f2f5}
-
-/* Note view (read mode) */
+.icon-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit;display:flex;align-items:center;gap:5px}
+.icon-btn:hover{background:#f0f2f5}
+/* note read view */
 .note-view{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);animation:fadeup .25s ease}
 @keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .nv-head{padding:20px 20px 14px;border-bottom:1px solid #e9edef}
@@ -79,12 +78,13 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
 .nv-body h2{font-size:17px;font-weight:600;margin-bottom:.45rem}
 .nv-body ul,.nv-body ol{padding-left:1.4rem;margin-bottom:.5rem}
 .nv-body blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
+.nv-body img{max-width:100%;border-radius:8px;margin:.5rem 0;display:block}
 .nv-foot{padding:10px 20px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .write-own{background:#25D366;color:#fff;border:none;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .write-own:hover{background:#128C7E}
 .err-box{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:14px}
 .loading{text-align:center;padding:60px 20px;color:#667781;font-size:15px}
-@media(max-width:560px){main{padding:14px 10px 40px}.save-btn span{display:none}.share-top{flex-direction:column}.views-badge{flex-direction:row;min-width:unset;align-self:stretch;justify-content:center}}
+@media(max-width:560px){main{padding:14px 10px 40px}.save-btn span{display:none}.share-top{flex-direction:column}.views-badge{flex-direction:row;min-width:unset;align-self:stretch;justify-content:center;gap:10px}}
 </style>
 </head>
 <body>
@@ -144,11 +144,15 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
         <span class="color-dot" style="background:#F3E5F5" onclick="setHl('#F3E5F5')"></span>
         <span class="color-dot" style="background:transparent;border:1.5px dashed #ccc" onclick="setHl('transparent')"></span>
         <div class="sep"></div>
+        <!-- Image upload button -->
+        <button class="tb" onclick="document.getElementById('img-input').click()" title="Insert image" style="font-size:16px">🖼</button>
+        <input type="file" id="img-input" accept="image/*" onchange="insertImageFile(this)">
+        <div class="sep"></div>
         <button class="tb" onclick="xCmd('removeFormat')">✕</button>
         <button class="tb" onclick="xCmd('undo')">↩</button>
         <button class="tb" onclick="xCmd('redo')">↪</button>
       </div>
-      <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message…" oninput="onEdit()"></div>
+      <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message… drag & drop images here too" oninput="onEdit()"></div>
       <div class="fbar">
         <span class="wc" id="wc">0 words</span>
         <div class="fbar-right">
@@ -161,7 +165,7 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
       </div>
     </div>
 
-    <!-- Share + views panel -->
+    <!-- Share + views panel (owner only) -->
     <div id="share-box" class="share-box" style="display:none">
       <div class="share-top">
         <div>
@@ -183,16 +187,16 @@ main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.428a.75.75 0 00.915.915l5.571-1.476A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.707 9.707 0 01-4.953-1.358l-.355-.211-3.677.974.974-3.677-.211-.355A9.707 9.707 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
           WhatsApp
         </button>
-        <button class="refresh-btn" onclick="refreshViews()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="2.2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        <button class="icon-btn" onclick="refreshViews()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Refresh views
         </button>
-        <button class="dl-btn" onclick="downloadHtml()">↓ Download HTML</button>
+        <button class="icon-btn" onclick="downloadHtml()">↓ HTML</button>
       </div>
     </div>
   </div>
 
-  <!-- READ PANEL -->
+  <!-- READ PANEL — no view count shown to reader -->
   <div id="read-panel" style="display:none">
     <div id="view-err" class="err-box" style="display:none"></div>
     <div id="note-view" class="note-view" style="display:none">
@@ -246,11 +250,64 @@ function setSt(msg, cls = '') {
   if (cls !== 'err') setTimeout(() => { el.textContent = ''; el.className = 'st'; }, 3000);
 }
 
+// ── Image insertion ───────────────────────────────────────────────
+function insertImageFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('editor').focus();
+    document.execCommand('insertHTML', false, `<img src="${e.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
+    onEdit();
+  };
+  reader.readAsDataURL(file);
+  input.value = ''; // reset so same file can be picked again
+}
+
+// Drag & drop images into editor
+const editor = document.getElementById('editor');
+editor.addEventListener('dragover', (e) => { e.preventDefault(); editor.classList.add('dragover'); });
+editor.addEventListener('dragleave', () => editor.classList.remove('dragover'));
+editor.addEventListener('drop', (e) => {
+  e.preventDefault();
+  editor.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  files.forEach(file => {
+    if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      editor.focus();
+      document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
+      onEdit();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// Paste images from clipboard
+editor.addEventListener('paste', (e) => {
+  const items = Array.from(e.clipboardData.items || []);
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+  if (!imgItem) return;
+  e.preventDefault();
+  const file = imgItem.getAsFile();
+  if (file.size > 4 * 1024 * 1024) { setSt('Image too large — max 4MB', 'err'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:.5rem 0" /><p></p>`);
+    onEdit();
+  };
+  reader.readAsDataURL(file);
+});
+
 // ── Save ─────────────────────────────────────────────────────────
 async function saveNote() {
   const title = document.getElementById('note-title').value.trim() || 'Untitled Note';
   const content = document.getElementById('editor').innerHTML;
-  if (!document.getElementById('editor').innerText.trim()) { setSt('Write something first!', 'err'); return; }
+  if (!document.getElementById('editor').innerText.trim() && !document.getElementById('editor').querySelector('img')) {
+    setSt('Write something first!', 'err'); return;
+  }
   const btn = document.getElementById('save-btn');
   btn.disabled = true; setSt('Saving…');
   try {
@@ -268,7 +325,6 @@ async function saveNote() {
     document.getElementById('share-box').style.display = 'block';
     document.getElementById('share-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     updateViewsBadge(0, null);
-    // Auto-refresh views every 30s so owner can watch in real time
     clearInterval(statsInterval);
     statsInterval = setInterval(refreshViews, 30000);
   } catch (err) {
@@ -281,14 +337,13 @@ function updateViewsBadge(views, lastViewedAt) {
   document.getElementById('views-num').textContent = views;
   document.getElementById('views-sub').textContent = lastViewedAt ? 'Last: ' + lastViewedAt : 'no views yet';
 }
-
 async function refreshViews() {
   if (!curId) return;
   try {
     const res = await fetch('/api/stats/' + curId);
     const data = await res.json();
     if (res.ok) updateViewsBadge(data.views, data.lastViewedAt);
-  } catch(e) { /* silently fail */ }
+  } catch(e) {}
 }
 
 // ── Share helpers ────────────────────────────────────────────────
@@ -305,7 +360,7 @@ function shareWA() {
 }
 function downloadHtml() {
   if (!curData) return;
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${curData.title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 14px}.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}.nv-title{font-size:20px;font-weight:700;color:#111}.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}.nc p{margin-bottom:.45rem}.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}@media(max-width:560px){.nh,.nc,.nf{padding-left:14px;padding-right:14px}}</style></head><body><div class="note"><div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div><div class="nc">${curData.content}</div><div class="nf">Saved ${curData.savedAt} &middot; Made with Inkwell</div></div></body></html>`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${curData.title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 14px}.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}.nv-title{font-size:20px;font-weight:700;color:#111}.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}.nc p{margin-bottom:.45rem}.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}.nc img{max-width:100%;border-radius:8px;margin:.5rem 0}.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}@media(max-width:560px){.nh,.nc,.nf{padding-left:14px;padding-right:14px}}</style></head><body><div class="note"><div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div><div class="nc">${curData.content}</div><div class="nf">Saved ${curData.savedAt} &middot; Made with Inkwell</div></div></body></html>`;
   const b = new Blob([html], { type: 'text/html' });
   const u = URL.createObjectURL(b);
   const a = document.createElement('a'); a.href = u;
@@ -313,7 +368,7 @@ function downloadHtml() {
   a.click(); URL.revokeObjectURL(u);
 }
 
-// ── Load note (read mode) ────────────────────────────────────────
+// ── Load note (read mode) — no view count shown ───────────────────
 async function loadNote(code) {
   try {
     const res = await fetch('/api/note/' + code);
@@ -323,7 +378,8 @@ async function loadNote(code) {
     document.title = data.title + ' — Inkwell';
     document.getElementById('vt').textContent = data.title;
     document.getElementById('vc').innerHTML = data.content;
-    document.getElementById('vm').textContent = 'Saved ' + data.savedAt + (data.views ? ' · ' + data.views + ' view' + (data.views !== 1 ? 's' : '') : '');
+    // Only show save date — no view count for readers
+    document.getElementById('vm').textContent = 'Saved ' + data.savedAt;
     document.getElementById('note-view').style.display = 'block';
   } catch (e) {
     document.getElementById('loading').style.display = 'none';
