@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Your Online Notebook</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#25D366;--dark-green:#128C7E;--light-bg:#ECE5DD;
+  --white:#fff;--text:#111;--muted:#667781;--border:#e9edef;
+  --toolbar-bg:#f0f2f5;--accent:#25D366;--accent2:#128C7E;
+}
+body{background:var(--light-bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+header{background:var(--dark-green);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:20px;height:20px}
+.logo-name{font-size:18px;font-weight:600;letter-spacing:-.2px}
+.logo-sub{font-size:10.5px;opacity:.75;margin-top:1px}
+.tabs{display:flex;background:rgba(0,0,0,.2);border-radius:20px;padding:3px;gap:2px}
+.tab{padding:6px 16px;border:none;background:transparent;border-radius:16px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.85);transition:all .15s;font-family:inherit;font-weight:400}
+.tab.active{background:#fff;color:var(--dark-green);font-weight:600}
+main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.title-row{display:flex;align-items:center;border-bottom:1px solid var(--border)}
+.title-in{flex:1;border:none;outline:none;font-size:17px;font-weight:600;padding:14px 16px;background:transparent;color:var(--text);font-family:inherit;letter-spacing:-.1px}
+.title-in::placeholder{color:#aaa;font-weight:400}
+.new-btn{padding:7px 14px;margin-right:10px;border:1px solid var(--border);border-radius:20px;background:transparent;cursor:pointer;font-size:12px;color:var(--muted);white-space:nowrap;font-family:inherit;transition:all .1s}
+.new-btn:hover{background:var(--toolbar-bg)}
+.toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--toolbar-bg);align-items:center}
+.tb{padding:5px 7px;border:none;background:transparent;border-radius:5px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .1s;min-width:28px;text-align:center;font-family:inherit;line-height:1.2}
+.tb:hover{background:#fff;color:var(--text)}
+.sep{width:1px;height:18px;background:var(--border);margin:0 3px;flex-shrink:0}
+.tb-sel{border:1px solid var(--border);background:#fff;color:var(--text);padding:4px 5px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;font-family:inherit}
+.color-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;display:inline-block;transition:transform .1s}
+.color-dot:hover{transform:scale(1.25)}
+.editor{min-height:380px;max-height:520px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:var(--text);overflow-y:auto}
+.editor:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.editor p{margin-bottom:.45rem}
+.editor h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
+.editor h2{font-size:17px;font-weight:600;margin-bottom:.45rem}
+.editor h3{font-size:15px;font-weight:600;margin-bottom:.35rem}
+.editor ul,.editor ol{padding-left:1.4rem;margin-bottom:.5rem}
+.editor blockquote{border-left:3px solid var(--green);padding-left:.85rem;color:var(--muted);margin:.5rem 0}
+.fbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);background:var(--toolbar-bg)}
+.wc{font-size:11px;color:var(--muted)}
+.fbar-right{display:flex;align-items:center;gap:8px}
+.st{font-size:12px;color:var(--muted)}
+.st.ok{color:var(--dark-green);font-weight:500}
+.st.err{color:#dc3545;font-weight:500}
+.save-btn{background:var(--green);color:#fff;border:none;padding:9px 20px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .15s;letter-spacing:-.1px}
+.save-btn:hover{background:var(--dark-green)}
+.save-btn:active{transform:scale(.97)}
+.save-btn:disabled{opacity:.6;cursor:not-allowed}
+.share-box{margin-top:14px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.share-box h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.share-box p{font-size:12px;color:var(--muted);margin-bottom:14px}
+.code-display{display:flex;align-items:center;background:var(--toolbar-bg);border-radius:10px;padding:12px 16px;gap:10px;margin-bottom:12px}
+.code-val{font-family:monospace;font-size:24px;font-weight:700;color:var(--dark-green);letter-spacing:4px;flex:1}
+.copy-btn{background:var(--green);color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .1s}
+.copy-btn:active{transform:scale(.95)}
+.dl-btn{background:transparent;border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--muted);font-family:inherit;transition:all .1s}
+.dl-btn:hover{background:var(--toolbar-bg)}
+.share-hint{font-size:12px;color:var(--muted);line-height:1.6}
+.share-hint b{color:var(--text)}
+.viewer{padding-top:4px}
+.read-input-row{display:flex;gap:8px;margin-bottom:16px}
+.code-in{flex:1;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:18px;font-family:monospace;letter-spacing:3px;outline:none;color:var(--text);background:#fff;text-transform:uppercase;transition:border .15s}
+.code-in:focus{border-color:var(--green)}
+.open-btn{background:var(--green);color:#fff;border:none;padding:12px 22px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:all .1s;white-space:nowrap}
+.open-btn:hover{background:var(--dark-green)}
+.open-btn:disabled{opacity:.6;cursor:not-allowed}
+.err-box{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.note-view{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);animation:fadeup .25s ease}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nv-head{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.nv-badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dark-green);font-weight:700;margin-bottom:6px}
+.nv-title{font-size:20px;font-weight:700;color:var(--text);line-height:1.3}
+.nv-body{padding:16px 18px;font-size:15px;line-height:1.7;color:var(--text)}
+.nv-body p{margin-bottom:.45rem}
+.nv-body h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
+.nv-body h2{font-size:17px;font-weight:600;margin-bottom:.45rem}
+.nv-body ul,.nv-body ol{padding-left:1.4rem;margin-bottom:.5rem}
+.nv-body blockquote{border-left:3px solid var(--green);padding-left:.85rem;color:var(--muted);margin:.5rem 0}
+.nv-foot{padding:10px 18px;border-top:1px solid var(--border);background:var(--toolbar-bg);font-size:11px;color:var(--muted)}
+@media(max-width:560px){
+  main{padding:14px 10px 40px}
+  .save-btn span{display:none}
+  .tabs .tab{padding:5px 11px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4h8l4 4v9a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="white" stroke-width="1.4"/>
+        <path d="M12 4v4h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M7 9h6M7 12h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">Inkwell</div>
+      <div class="logo-sub">Your personal notebook</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-write" onclick="switchTab('write')">Write</button>
+    <button class="tab" id="tab-read" onclick="switchTab('read')">Read a Note</button>
+  </div>
+</header>
+
+<main>
+  <!-- WRITE PANEL -->
+  <div id="write-panel">
+    <div class="card">
+      <div class="title-row">
+        <input class="title-in" id="note-title" placeholder="Note title…" />
+        <button class="new-btn" onclick="newNote()">+ New</button>
+      </div>
+      <div class="toolbar">
+        <select class="tb-sel" onchange="xCmd('formatBlock',this.value);this.value='p'">
+          <option value="p">Normal</option>
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+          <option value="h3">H3</option>
+          <option value="blockquote">Quote</option>
+        </select>
+        <select class="tb-sel" onchange="xCmd('fontSize',this.value)">
+          <option value="2">Small</option>
+          <option value="3" selected>Normal</option>
+          <option value="4">Medium</option>
+          <option value="5">Large</option>
+          <option value="6">XL</option>
+        </select>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('bold')"><b>B</b></button>
+        <button class="tb" onclick="xCmd('italic')"><i>I</i></button>
+        <button class="tb" onclick="xCmd('underline')"><u>U</u></button>
+        <button class="tb" onclick="xCmd('strikeThrough')"><s>S</s></button>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('justifyLeft')" title="Left">⬛</button>
+        <button class="tb" onclick="xCmd('justifyCenter')" title="Center" style="font-size:11px">≡</button>
+        <button class="tb" onclick="xCmd('justifyRight')" title="Right">⬛</button>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('insertUnorderedList')">• —</button>
+        <button class="tb" onclick="xCmd('insertOrderedList')">1.</button>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:#aaa;margin-right:3px">Text:</span>
+        <span class="color-dot" style="background:#1A1A1A" onclick="setFg('#1A1A1A')"></span>
+        <span class="color-dot" style="background:#128C7E" onclick="setFg('#128C7E')"></span>
+        <span class="color-dot" style="background:#C0392B" onclick="setFg('#C0392B')"></span>
+        <span class="color-dot" style="background:#D4A017" onclick="setFg('#D4A017')"></span>
+        <span class="color-dot" style="background:#2980B9" onclick="setFg('#2980B9')"></span>
+        <span class="color-dot" style="background:#8E44AD" onclick="setFg('#8E44AD')"></span>
+        <span class="color-dot" style="background:#E67E22" onclick="setFg('#E67E22')"></span>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:#aaa;margin-right:3px">Mark:</span>
+        <span class="color-dot" style="background:#FFF3CD" onclick="setHl('#FFF3CD')"></span>
+        <span class="color-dot" style="background:#D4EDDA" onclick="setHl('#D4EDDA')"></span>
+        <span class="color-dot" style="background:#FCE4EC" onclick="setHl('#FCE4EC')"></span>
+        <span class="color-dot" style="background:#E3F2FD" onclick="setHl('#E3F2FD')"></span>
+        <span class="color-dot" style="background:#F3E5F5" onclick="setHl('#F3E5F5')"></span>
+        <span class="color-dot" style="background:transparent;border:1.5px dashed #ccc" onclick="setHl('transparent')"></span>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('removeFormat')" title="Clear format">✕</button>
+        <button class="tb" onclick="xCmd('undo')">↩</button>
+        <button class="tb" onclick="xCmd('redo')">↪</button>
+      </div>
+      <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message…" oninput="onEdit()"></div>
+      <div class="fbar">
+        <span class="wc" id="wc">0 words</span>
+        <div class="fbar-right">
+          <span id="st" class="st"></span>
+          <button class="save-btn" id="save-btn" onclick="saveNote()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 3h9l3 3v8a.5.5 0 01-.5.5H2.5A.5.5 0 012 14V3.5A.5.5 0 012 3z" stroke="white" stroke-width="1.2"/><rect x="4" y="2" width="5" height="3" rx=".3" fill="white" opacity=".8"/><rect x="3" y="8" width="9" height="4.5" rx=".3" fill="white" opacity=".55"/></svg>
+            <span>Save &amp; Share</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="share-box" class="share-box" style="display:none">
+      <h3>Note saved!</h3>
+      <p>Share this code — anyone can read your note. No login needed.</p>
+      <div class="code-display">
+        <span class="code-val" id="share-code"></span>
+        <button class="copy-btn" onclick="copyCode(event)">Copy</button>
+        <button class="dl-btn" onclick="downloadHtml()">↓ HTML</button>
+      </div>
+      <div class="share-hint">
+        They open this site → tap <b>Read a Note</b> → enter code → done. Works on any phone, laptop, tablet — no account needed.
+      </div>
+    </div>
+  </div>
+
+  <!-- READ PANEL -->
+  <div id="read-panel" style="display:none" class="viewer">
+    <div class="read-input-row">
+      <input class="code-in" id="view-code" placeholder="Enter 8-letter code…" maxlength="8"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+        onkeydown="if(event.key==='Enter')viewNote()" />
+      <button class="open-btn" id="open-btn" onclick="viewNote()">Open</button>
+    </div>
+    <div id="view-err" class="err-box" style="display:none"></div>
+    <div id="note-view" style="display:none" class="note-view">
+      <div class="nv-head">
+        <div class="nv-badge">Inkwell Note</div>
+        <div class="nv-title" id="vt"></div>
+      </div>
+      <div class="nv-body" id="vc"></div>
+      <div class="nv-foot" id="vm"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+let curId = null, curData = null;
+
+function switchTab(t) {
+  ['write', 'read'].forEach(x => {
+    document.getElementById(x + '-panel').style.display = x === t ? 'block' : 'none';
+    document.getElementById('tab-' + x).classList.toggle('active', x === t);
+  });
+  if (t === 'write') setTimeout(() => document.getElementById('editor').focus(), 50);
+}
+
+function xCmd(cmd, val = null) { document.getElementById('editor').focus(); document.execCommand(cmd, false, val); onEdit(); }
+function setFg(c) { document.getElementById('editor').focus(); document.execCommand('foreColor', false, c); }
+function setHl(c) { document.getElementById('editor').focus(); document.execCommand('hiliteColor', false, c); }
+
+function onEdit() {
+  const txt = document.getElementById('editor').innerText || '';
+  const w = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  document.getElementById('wc').textContent = w + ' word' + (w !== 1 ? 's' : '');
+}
+
+function setSt(msg, cls = '') {
+  const el = document.getElementById('st');
+  el.textContent = msg;
+  el.className = 'st ' + cls;
+  if (cls !== 'err') setTimeout(() => { el.textContent = ''; el.className = 'st'; }, 3000);
+}
+
+function newNote() {
+  if (document.getElementById('editor').innerText.trim() && !confirm('Start fresh? Unsaved changes will be lost.')) return;
+  document.getElementById('note-title').value = '';
+  document.getElementById('editor').innerHTML = '';
+  document.getElementById('share-box').style.display = 'none';
+  curId = null; curData = null;
+  onEdit();
+  document.getElementById('editor').focus();
+}
+
+async function saveNote() {
+  const title = document.getElementById('note-title').value.trim() || 'Untitled Note';
+  const content = document.getElementById('editor').innerHTML;
+  const plainText = document.getElementById('editor').innerText.trim();
+  if (!plainText) { setSt('Write something first!', 'err'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  setSt('Saving…');
+
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content, id: curId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
+
+    curId = data.id;
+    curData = { id: data.id, title, content, savedAt: data.savedAt };
+    setSt('Saved!', 'ok');
+    document.getElementById('share-code').textContent = data.id;
+    document.getElementById('share-box').style.display = 'block';
+    document.getElementById('share-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) {
+    console.error('Save failed:', err);
+    setSt('Save failed: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function copyCode(e) {
+  navigator.clipboard.writeText(document.getElementById('share-code').textContent).then(() => {
+    e.target.textContent = 'Copied!';
+    setTimeout(() => e.target.textContent = 'Copy', 2000);
+  });
+}
+
+function downloadHtml() {
+  if (!curData) return;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${curData.title}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 14px}
+.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}
+.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}
+.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}
+.nv-title{font-size:20px;font-weight:700;color:#111;line-height:1.3}
+.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}
+.nc p{margin-bottom:.45rem}.nc h1{font-size:20px;font-weight:700;margin-bottom:.5rem}
+.nc h2{font-size:17px;font-weight:600;margin-bottom:.4rem}
+.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}
+.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
+.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}
+@media(max-width:560px){.nh,.nc,.nf{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<div class="note">
+  <div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div>
+  <div class="nc">${curData.content}</div>
+  <div class="nf">Saved ${curData.savedAt} &middot; Code: ${curData.id} &middot; Made with Inkwell</div>
+</div>
+</body>
+</html>`;
+  const b = new Blob([html], { type: 'text/html' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a');
+  a.href = u; a.download = (curData.title || 'note').replace(/[^a-z0-9]/gi, '_') + '.html';
+  a.click(); URL.revokeObjectURL(u);
+}
+
+async function viewNote() {
+  const code = document.getElementById('view-code').value.trim().toUpperCase();
+  const err = document.getElementById('view-err');
+  const nv = document.getElementById('note-view');
+  const btn = document.getElementById('open-btn');
+  err.style.display = 'none'; nv.style.display = 'none';
+  if (code.length !== 8) { err.textContent = 'Enter the full 8-character code.'; err.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Loading…';
+  try {
+    const res = await fetch('/api/note/' + code);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Not found');
+    document.getElementById('vt').textContent = data.title;
+    document.getElementById('vc').innerHTML = data.content;
+    document.getElementById('vm').textContent = 'Saved ' + data.savedAt + ' · Code: ' + data.id;
+    nv.style.display = 'block';
+    nv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    err.textContent = 'Note not found — check the code and try again.';
+    err.style.display = 'block';
+    console.error('Fetch note error:', e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Open';
+  }
+}
+
+// Auto-open note if code is in URL query string: ?code=ABCD1234
+const urlCode = new URLSearchParams(location.search).get('code');
+if (urlCode && urlCode.length === 8) {
+  switchTab('read');
+  document.getElementById('view-code').value = urlCode.toUpperCase();
+  viewNote();
+}
+
+document.getElementById('editor').focus();
+</script>
+</body>
+</html>
