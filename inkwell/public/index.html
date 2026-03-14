@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inkwell — Your Online Notebook</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+header{background:#128C7E;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.logo-name{font-size:18px;font-weight:600;letter-spacing:-.2px}
+.logo-sub{font-size:10.5px;opacity:.7;margin-top:1px}
+.new-note-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.new-note-btn:hover{background:rgba(255,255,255,.3)}
+main{flex:1;max-width:780px;width:100%;margin:0 auto;padding:20px 14px 60px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.title-row{display:flex;align-items:center;border-bottom:1px solid #e9edef}
+.title-in{flex:1;border:none;outline:none;font-size:17px;font-weight:600;padding:14px 16px;background:transparent;color:#111;font-family:inherit;letter-spacing:-.1px}
+.title-in::placeholder{color:#aaa;font-weight:400}
+.toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:6px 10px;border-bottom:1px solid #e9edef;background:#f0f2f5;align-items:center}
+.tb{padding:5px 7px;border:none;background:transparent;border-radius:5px;cursor:pointer;font-size:13px;color:#667781;transition:all .1s;min-width:28px;text-align:center;font-family:inherit;line-height:1.2}
+.tb:hover{background:#fff;color:#111}
+.sep{width:1px;height:18px;background:#e9edef;margin:0 3px;flex-shrink:0}
+.tb-sel{border:1px solid #e9edef;background:#fff;color:#111;padding:4px 5px;border-radius:5px;font-size:12px;cursor:pointer;outline:none;font-family:inherit}
+.color-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;display:inline-block;transition:transform .1s}
+.color-dot:hover{transform:scale(1.25)}
+.editor{min-height:380px;max-height:520px;padding:16px;outline:none;font-size:15px;line-height:1.7;color:#111;overflow-y:auto}
+.editor:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.editor p{margin-bottom:.45rem}
+.editor h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
+.editor h2{font-size:17px;font-weight:600;margin-bottom:.45rem}
+.editor h3{font-size:15px;font-weight:600;margin-bottom:.35rem}
+.editor ul,.editor ol{padding-left:1.4rem;margin-bottom:.5rem}
+.editor blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
+.fbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #e9edef;background:#f0f2f5}
+.wc{font-size:11px;color:#667781}
+.fbar-right{display:flex;align-items:center;gap:8px}
+.st{font-size:12px;color:#667781}
+.st.ok{color:#128C7E;font-weight:500}
+.st.err{color:#dc3545;font-weight:500}
+.save-btn{background:#25D366;color:#fff;border:none;padding:9px 20px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:inherit;transition:all .15s}
+.save-btn:hover{background:#128C7E}
+.save-btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* Share box */
+.share-box{margin-top:14px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.share-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.share-top h3{font-size:14px;font-weight:600;color:#111;margin-bottom:3px}
+.share-top p{font-size:12px;color:#667781}
+
+/* View counter badge */
+.views-badge{background:#f0f2f5;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:110px;text-align:center;flex-direction:column}
+.views-num{font-size:28px;font-weight:700;color:#128C7E;line-height:1}
+.views-label{font-size:10px;color:#667781;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.views-sub{font-size:10px;color:#aaa;margin-top:3px}
+
+.link-display{display:flex;align-items:center;background:#f0f2f5;border-radius:10px;padding:11px 14px;gap:10px;margin-bottom:10px}
+.link-val{font-size:13px;color:#128C7E;flex:1;font-weight:500;word-break:break-all}
+.copy-btn{background:#25D366;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.share-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wa-btn{background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;gap:6px}
+.wa-btn:hover{background:#1da851}
+.dl-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit}
+.dl-btn:hover{background:#f0f2f5}
+.refresh-btn{background:transparent;border:1px solid #e9edef;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#667781;font-family:inherit;display:flex;align-items:center;gap:5px}
+.refresh-btn:hover{background:#f0f2f5}
+
+/* Note view (read mode) */
+.note-view{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);animation:fadeup .25s ease}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nv-head{padding:20px 20px 14px;border-bottom:1px solid #e9edef}
+.nv-badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}
+.nv-title{font-size:21px;font-weight:700;color:#111;line-height:1.3}
+.nv-body{padding:18px 20px;font-size:15px;line-height:1.7;color:#111}
+.nv-body p{margin-bottom:.45rem}
+.nv-body h1{font-size:20px;font-weight:700;margin-bottom:.6rem}
+.nv-body h2{font-size:17px;font-weight:600;margin-bottom:.45rem}
+.nv-body ul,.nv-body ol{padding-left:1.4rem;margin-bottom:.5rem}
+.nv-body blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}
+.nv-foot{padding:10px 20px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.write-own{background:#25D366;color:#fff;border:none;padding:6px 14px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.write-own:hover{background:#128C7E}
+.err-box{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:14px}
+.loading{text-align:center;padding:60px 20px;color:#667781;font-size:15px}
+@media(max-width:560px){main{padding:14px 10px 40px}.save-btn span{display:none}.share-top{flex-direction:column}.views-badge{flex-direction:row;min-width:unset;align-self:stretch;justify-content:center}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h8l4 4v9a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="white" stroke-width="1.4"/><path d="M12 4v4h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/><path d="M7 9h6M7 12h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </div>
+    <div><div class="logo-name">Inkwell</div><div class="logo-sub">Your personal notebook</div></div>
+  </div>
+  <button class="new-note-btn" onclick="goWrite()">+ Write a note</button>
+</header>
+
+<main>
+  <div id="loading" class="loading" style="display:none">Opening note…</div>
+
+  <!-- WRITE PANEL -->
+  <div id="write-panel">
+    <div class="card">
+      <div class="title-row">
+        <input class="title-in" id="note-title" placeholder="Note title…" />
+      </div>
+      <div class="toolbar">
+        <select class="tb-sel" onchange="xCmd('formatBlock',this.value);this.value='p'">
+          <option value="p">Normal</option><option value="h1">H1</option><option value="h2">H2</option><option value="h3">H3</option><option value="blockquote">Quote</option>
+        </select>
+        <select class="tb-sel" onchange="xCmd('fontSize',this.value)">
+          <option value="2">Small</option><option value="3" selected>Normal</option><option value="4">Medium</option><option value="5">Large</option><option value="6">XL</option>
+        </select>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('bold')"><b>B</b></button>
+        <button class="tb" onclick="xCmd('italic')"><i>I</i></button>
+        <button class="tb" onclick="xCmd('underline')"><u>U</u></button>
+        <button class="tb" onclick="xCmd('strikeThrough')"><s>S</s></button>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('justifyLeft')">⬛</button>
+        <button class="tb" onclick="xCmd('justifyCenter')" style="font-size:11px">≡</button>
+        <button class="tb" onclick="xCmd('justifyRight')">⬛</button>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('insertUnorderedList')">• —</button>
+        <button class="tb" onclick="xCmd('insertOrderedList')">1.</button>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:#aaa;margin-right:3px">Text:</span>
+        <span class="color-dot" style="background:#1A1A1A" onclick="setFg('#1A1A1A')"></span>
+        <span class="color-dot" style="background:#128C7E" onclick="setFg('#128C7E')"></span>
+        <span class="color-dot" style="background:#C0392B" onclick="setFg('#C0392B')"></span>
+        <span class="color-dot" style="background:#D4A017" onclick="setFg('#D4A017')"></span>
+        <span class="color-dot" style="background:#2980B9" onclick="setFg('#2980B9')"></span>
+        <span class="color-dot" style="background:#8E44AD" onclick="setFg('#8E44AD')"></span>
+        <span class="color-dot" style="background:#E67E22" onclick="setFg('#E67E22')"></span>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:#aaa;margin-right:3px">Mark:</span>
+        <span class="color-dot" style="background:#FFF3CD" onclick="setHl('#FFF3CD')"></span>
+        <span class="color-dot" style="background:#D4EDDA" onclick="setHl('#D4EDDA')"></span>
+        <span class="color-dot" style="background:#FCE4EC" onclick="setHl('#FCE4EC')"></span>
+        <span class="color-dot" style="background:#E3F2FD" onclick="setHl('#E3F2FD')"></span>
+        <span class="color-dot" style="background:#F3E5F5" onclick="setHl('#F3E5F5')"></span>
+        <span class="color-dot" style="background:transparent;border:1.5px dashed #ccc" onclick="setHl('transparent')"></span>
+        <div class="sep"></div>
+        <button class="tb" onclick="xCmd('removeFormat')">✕</button>
+        <button class="tb" onclick="xCmd('undo')">↩</button>
+        <button class="tb" onclick="xCmd('redo')">↪</button>
+      </div>
+      <div id="editor" class="editor" contenteditable="true" data-placeholder="Type a message…" oninput="onEdit()"></div>
+      <div class="fbar">
+        <span class="wc" id="wc">0 words</span>
+        <div class="fbar-right">
+          <span id="st" class="st"></span>
+          <button class="save-btn" id="save-btn" onclick="saveNote()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 3h9l3 3v8a.5.5 0 01-.5.5H2.5A.5.5 0 012 14V3.5A.5.5 0 012 3z" stroke="white" stroke-width="1.2"/><rect x="4" y="2" width="5" height="3" rx=".3" fill="white" opacity=".8"/><rect x="3" y="8" width="9" height="4.5" rx=".3" fill="white" opacity=".55"/></svg>
+            <span>Save &amp; Share</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share + views panel -->
+    <div id="share-box" class="share-box" style="display:none">
+      <div class="share-top">
+        <div>
+          <h3>Note saved! Share this link</h3>
+          <p>Anyone who taps it reads instantly — no app, no login, nothing.</p>
+        </div>
+        <div class="views-badge">
+          <div class="views-num" id="views-num">0</div>
+          <div class="views-label">Views</div>
+          <div class="views-sub" id="views-sub">no views yet</div>
+        </div>
+      </div>
+      <div class="link-display">
+        <span class="link-val" id="share-link"></span>
+        <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy link</button>
+      </div>
+      <div class="share-actions">
+        <button class="wa-btn" onclick="shareWA()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.428a.75.75 0 00.915.915l5.571-1.476A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.707 9.707 0 01-4.953-1.358l-.355-.211-3.677.974.974-3.677-.211-.355A9.707 9.707 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+          WhatsApp
+        </button>
+        <button class="refresh-btn" onclick="refreshViews()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="2.2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh views
+        </button>
+        <button class="dl-btn" onclick="downloadHtml()">↓ Download HTML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- READ PANEL -->
+  <div id="read-panel" style="display:none">
+    <div id="view-err" class="err-box" style="display:none"></div>
+    <div id="note-view" class="note-view" style="display:none">
+      <div class="nv-head">
+        <div class="nv-badge">Inkwell Note</div>
+        <div class="nv-title" id="vt"></div>
+      </div>
+      <div class="nv-body" id="vc"></div>
+      <div class="nv-foot">
+        <span id="vm"></span>
+        <button class="write-own" onclick="goWrite()">Write your own note</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let curId = null, curData = null, statsInterval = null;
+
+// ── Routing ──────────────────────────────────────────────────────
+const pathCode = location.pathname.match(/^\/note\/([A-Z0-9]{8})$/i)?.[1]?.toUpperCase();
+if (pathCode) {
+  document.getElementById('write-panel').style.display = 'none';
+  document.getElementById('read-panel').style.display = 'block';
+  document.getElementById('loading').style.display = 'block';
+  loadNote(pathCode);
+} else {
+  setTimeout(() => document.getElementById('editor').focus(), 100);
+}
+
+function goWrite() {
+  history.pushState({}, '', '/');
+  clearInterval(statsInterval);
+  document.getElementById('read-panel').style.display = 'none';
+  document.getElementById('write-panel').style.display = 'block';
+  document.getElementById('editor').focus();
+}
+
+// ── Editor ───────────────────────────────────────────────────────
+function xCmd(cmd, val = null) { document.getElementById('editor').focus(); document.execCommand(cmd, false, val); onEdit(); }
+function setFg(c) { document.getElementById('editor').focus(); document.execCommand('foreColor', false, c); }
+function setHl(c) { document.getElementById('editor').focus(); document.execCommand('hiliteColor', false, c); }
+function onEdit() {
+  const txt = document.getElementById('editor').innerText || '';
+  const w = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  document.getElementById('wc').textContent = w + ' word' + (w !== 1 ? 's' : '');
+}
+function setSt(msg, cls = '') {
+  const el = document.getElementById('st');
+  el.textContent = msg; el.className = 'st ' + cls;
+  if (cls !== 'err') setTimeout(() => { el.textContent = ''; el.className = 'st'; }, 3000);
+}
+
+// ── Save ─────────────────────────────────────────────────────────
+async function saveNote() {
+  const title = document.getElementById('note-title').value.trim() || 'Untitled Note';
+  const content = document.getElementById('editor').innerHTML;
+  if (!document.getElementById('editor').innerText.trim()) { setSt('Write something first!', 'err'); return; }
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; setSt('Saving…');
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content, id: curId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
+    curId = data.id;
+    curData = { id: data.id, title, content, savedAt: data.savedAt };
+    const shareUrl = location.origin + '/note/' + data.id;
+    setSt('Saved!', 'ok');
+    document.getElementById('share-link').textContent = shareUrl;
+    document.getElementById('share-box').style.display = 'block';
+    document.getElementById('share-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    updateViewsBadge(0, null);
+    // Auto-refresh views every 30s so owner can watch in real time
+    clearInterval(statsInterval);
+    statsInterval = setInterval(refreshViews, 30000);
+  } catch (err) {
+    console.error('Save failed:', err);
+    setSt('Save failed: ' + err.message, 'err');
+  } finally { btn.disabled = false; }
+}
+
+function updateViewsBadge(views, lastViewedAt) {
+  document.getElementById('views-num').textContent = views;
+  document.getElementById('views-sub').textContent = lastViewedAt ? 'Last: ' + lastViewedAt : 'no views yet';
+}
+
+async function refreshViews() {
+  if (!curId) return;
+  try {
+    const res = await fetch('/api/stats/' + curId);
+    const data = await res.json();
+    if (res.ok) updateViewsBadge(data.views, data.lastViewedAt);
+  } catch(e) { /* silently fail */ }
+}
+
+// ── Share helpers ────────────────────────────────────────────────
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('share-link').textContent).then(() => {
+    const b = document.getElementById('copy-btn');
+    b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy link', 2000);
+  });
+}
+function shareWA() {
+  const url = document.getElementById('share-link').textContent;
+  const title = document.getElementById('note-title').value.trim() || 'My note';
+  window.open('https://wa.me/?text=' + encodeURIComponent(title + '\n' + url), '_blank');
+}
+function downloadHtml() {
+  if (!curData) return;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${curData.title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#ECE5DD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 14px}.note{max-width:680px;width:100%;background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.12);overflow:hidden}.nh{padding:20px 22px 16px;border-bottom:1px solid #e9edef}.badge{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#128C7E;font-weight:700;margin-bottom:6px}.nv-title{font-size:20px;font-weight:700;color:#111}.nc{padding:18px 22px;font-size:15px;line-height:1.7;color:#222}.nc p{margin-bottom:.45rem}.nc ul,.nc ol{padding-left:1.4rem;margin-bottom:.5rem}.nc blockquote{border-left:3px solid #25D366;padding-left:.85rem;color:#667781;margin:.5rem 0}.nf{padding:10px 22px;border-top:1px solid #e9edef;background:#f0f2f5;font-size:11px;color:#667781}@media(max-width:560px){.nh,.nc,.nf{padding-left:14px;padding-right:14px}}</style></head><body><div class="note"><div class="nh"><div class="badge">Inkwell Note</div><div class="nv-title">${curData.title}</div></div><div class="nc">${curData.content}</div><div class="nf">Saved ${curData.savedAt} &middot; Made with Inkwell</div></div></body></html>`;
+  const b = new Blob([html], { type: 'text/html' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = u;
+  a.download = (curData.title || 'note').replace(/[^a-z0-9]/gi, '_') + '.html';
+  a.click(); URL.revokeObjectURL(u);
+}
+
+// ── Load note (read mode) ────────────────────────────────────────
+async function loadNote(code) {
+  try {
+    const res = await fetch('/api/note/' + code);
+    const data = await res.json();
+    document.getElementById('loading').style.display = 'none';
+    if (!res.ok) throw new Error(data.error || 'Not found');
+    document.title = data.title + ' — Inkwell';
+    document.getElementById('vt').textContent = data.title;
+    document.getElementById('vc').innerHTML = data.content;
+    document.getElementById('vm').textContent = 'Saved ' + data.savedAt + (data.views ? ' · ' + data.views + ' view' + (data.views !== 1 ? 's' : '') : '');
+    document.getElementById('note-view').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    const err = document.getElementById('view-err');
+    err.textContent = 'Note not found — this link may be wrong or expired.';
+    err.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
